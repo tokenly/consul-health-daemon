@@ -1,0 +1,1 @@
+A library to monitor services health and report to consul
