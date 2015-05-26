@@ -6,7 +6,6 @@ namespace Tokenly\ConsulHealthDaemon;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
-use Illuminate\Support\Facades\Config;
 
 /**
 * ConsulClient
@@ -14,8 +13,9 @@ use Illuminate\Support\Facades\Config;
 class ConsulClient
 {
 
-    public function __construct() {
-        $this->guzzle_client = new Client(['base_url' => Config::get('consul-health.consul_url')]);
+    public function __construct($consul_url=null) {
+        if ($consul_url === null) { $consul_url = \Illuminate\Support\Facades\Config::get('consul-health.consul_url'); }
+        $this->guzzle_client = new Client(['base_url' => $consul_url]);
     }
 
     public function healthUp($container_name) {
