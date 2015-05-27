@@ -64,10 +64,12 @@ class ConsulHealthMonitorCommand extends Command {
             try {
                 // fire a check event
                 //   for other handlers
-                Event::fire('consul-health.check');
+                Event::fire('consul-health.console.check');
 
             } catch (Exception $e) {
                 EventLog::logError('healthcheck.failed', $e);
+
+                $consul->checkFail($my_service_id, $e->getMessage());
             }
 
             sleep($sleep_delay);
