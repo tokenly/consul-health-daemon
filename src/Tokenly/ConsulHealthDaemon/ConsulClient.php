@@ -6,6 +6,7 @@ namespace Tokenly\ConsulHealthDaemon;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
+use Illuminate\Support\Facades\Log;
 
 /**
 * ConsulClient
@@ -26,13 +27,31 @@ class ConsulClient
     }
 
     public function checkPass($check_id) {
-        $this->guzzle_client->get('/v1/agent/check/pass/'.urlencode($check_id));
+        try {
+            $this->guzzle_client->get('/v1/agent/check/pass/'.urlencode($check_id));
+            return true;
+        } catch (Exception $e) {
+            Log::warning("failed to update check pass: ".$check_id);
+            return false;
+        }
     }
     public function checkWarn($check_id, $note=null) {
-        $this->guzzle_client->get('/v1/agent/check/warn/'.urlencode($check_id), ['query' => ['note' => $note]]);
+        try {
+            $this->guzzle_client->get('/v1/agent/check/warn/'.urlencode($check_id), ['query' => ['note' => $note]]);
+            return true;
+        } catch (Exception $e) {
+            Log::warning("failed to update check warn: ".$check_id);
+            return false;
+        }
     }
     public function checkFail($check_id, $note=null) {
-        $this->guzzle_client->get('/v1/agent/check/fail/'.urlencode($check_id), ['query' => ['note' => $note]]);
+        try {
+            $this->guzzle_client->get('/v1/agent/check/fail/'.urlencode($check_id), ['query' => ['note' => $note]]);
+            return true;
+        } catch (Exception $e) {
+            Log::warning("failed to update check failure: ".$check_id);
+            return false;
+        }
     }
 
     public function setKeyValue($key, $value) {
