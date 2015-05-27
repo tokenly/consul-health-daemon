@@ -78,7 +78,6 @@ class ServicesChecker {
 
     public function pushQueueSizeChecks($service_prefix, $queue_params, $connection=null) {
         foreach($queue_params as $queue_name => $max_size) {
-            print "$queue_name\n";
             try {
                 $queue_size = $this->getQueueSize($queue_name, $connection);
 
