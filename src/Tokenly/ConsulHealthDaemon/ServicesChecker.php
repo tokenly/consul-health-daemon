@@ -3,7 +3,9 @@
 namespace Tokenly\ConsulHealthDaemon;
 
 
+use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
@@ -123,6 +125,84 @@ class ServicesChecker {
 
         return;
     }
+
+    public function checkTotalQueueJobsVelocity($queue_velocity_params, $connection=null) {
+        foreach($queue_velocity_params as $queue_name => $velocity_params) {
+            // echo "checking queue $queue_name.  Now is ".Carbon::now()."\n";
+            $service_id = $this->service_prefix."queue_velocity_".$queue_name;
+
+            try {
+                $minumum_velocity = $velocity_params[0];
+                $time_description = $velocity_params[1];
+
+                $now = Carbon::now();
+                $old_time = Carbon::parse('-'.$time_description);
+                $seconds_to_check = $old_time->diffInSeconds($now);
+                $total_size_now = $this->getTotalQueueJobs($queue_name, $connection);
+                $total_size_past = $this->getTotalQueueJobsInThePast($queue_name, $old_time);
+                // echo "$queue_name \$now={$now} \$old_time={$old_time} \$total_size_now=".json_encode($total_size_now, 192)." \$total_size_past=".json_encode($total_size_past, 192)."\n";
+
+                // cache $total_size_now
+                $expires_at_time = $now->copy()->addSeconds($seconds_to_check)->addMinutes(10);
+                $key = 'qTotalJobs_'.$queue_name.'_'.$now->format('Ymd_Hi');
+                // echo "PUT key={$key} value=".json_encode($total_size_now, 192)." Expires at ".$expires_at_time."\n";
+                Cache::add($key, $total_size_now, $expires_at_time);
+
+
+                if ($total_size_past === null) {
+                    // not enough information - pass for now
+                    $this->consul_client->checkPass($service_id);
+                    return;
+                }
+
+                try {
+                    $actual_velocity = $total_size_now - $total_size_past;
+                    // echo "$queue_name \$actual_velocity=$actual_velocity\n";
+                    if ($actual_velocity >= $minumum_velocity) {
+                        $this->consul_client->checkPass($service_id);
+                    } else {
+                        $this->consul_client->checkFail($service_id, "Queue $queue_name velocity was $actual_velocity in $time_description");
+                    }
+                } catch (Exception $e) {
+                    Log::error($e->getMessage());
+                }
+
+            } catch (Exception $e) {
+                try {
+                    Log::error($e->getMessage());
+                    $this->consul_client->checkFail($service_id, $e->getMessage());
+                } catch (Exception $e) {
+                    Log::error($e->getMessage());
+                }
+            }
+
+        }
+
+        return;
+    }
+
+    protected function getTotalQueueJobsInThePast($queue_name, $old_time) {
+        $now = Carbon::now()->second(0);
+        $working_time = $old_time->copy()->second(0);
+
+        $max_minutes_to_check = 10;
+        while($working_time->lte($now)) {
+            $key = 'qTotalJobs_'.$queue_name.'_'.$working_time->format('Ymd_Hi');
+            $value = Cache::get($key);
+            // echo "getTotalQueueJobsInThePast key={$key} value=".json_encode($value, 192)."\n";
+            if ($value !== null) { return $value; }
+
+            $working_time->addMinutes(1);
+        }
+        return null;
+    }
+
+    public function getTotalQueueJobs($queue_name, $connection=null) {
+        $pheanstalk = Queue::connection($connection)->getPheanstalk();
+        $stats = $pheanstalk->statsTube($queue_name);
+        return $stats['total-jobs'];
+    }
+
 
     public function getQueueSize($queue_name, $connection=null) {
         $pheanstalk = Queue::connection($connection)->getPheanstalk();
