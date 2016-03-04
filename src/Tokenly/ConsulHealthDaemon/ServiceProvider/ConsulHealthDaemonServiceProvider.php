@@ -27,7 +27,7 @@ class ConsulHealthDaemonServiceProvider extends ServiceProvider
         $this->bindConfig();
 
         $this->app->bind('Tokenly\ConsulHealthDaemon\ConsulClient', function($app) {
-            $client = new \Tokenly\ConsulHealthDaemon\ConsulClient(Config::get('consul-health.connection_string'));
+            $client = new \Tokenly\ConsulHealthDaemon\ConsulClient(Config::get('consul-health.consul_url'));
             return $client;
         });
 
