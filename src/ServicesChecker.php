@@ -100,9 +100,9 @@ class ServicesChecker {
     public function checkQueueSizes($queue_params, $connection=null) {
         foreach($queue_params as $queue_name => $max_size) {
             try {
+                $service_id = $this->service_prefix."queue_".$queue_name;
                 $queue_size = $this->getQueueSize($queue_name, $connection);
 
-                $service_id = $this->service_prefix."queue_".$queue_name;
                 try {
                     if ($queue_size < $max_size) {
                         $this->consul_client->checkPass($service_id);
@@ -116,6 +116,7 @@ class ServicesChecker {
             } catch (Exception $e) {
                 try {
                     $this->consul_client->checkFail($service_id, $e->getMessage());
+                    Log::error("checkQueueSizes ($queue_name) failed: ".$e->getMessage());
                 } catch (Exception $e) {
                     Log::error($e->getMessage());
                 }
@@ -169,8 +170,8 @@ class ServicesChecker {
 
             } catch (Exception $e) {
                 try {
-                    Log::error($e->getMessage());
                     $this->consul_client->checkFail($service_id, $e->getMessage());
+                    Log::error($e->getMessage());
                 } catch (Exception $e) {
                     Log::error($e->getMessage());
                 }
