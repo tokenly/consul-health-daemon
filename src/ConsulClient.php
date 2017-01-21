@@ -34,7 +34,9 @@ class ConsulClient
             $this->guzzle_client->get($this->consul_url.'/v1/agent/check/pass/'.urlencode($check_id));
             return true;
         } catch (Exception $e) {
-            Log::warning("failed to update check pass: ".$check_id);
+            if (class_exists(Log::class, true)) {
+                Log::warning("failed to update check pass: ".$check_id);
+            }
             return false;
         }
     }
@@ -43,7 +45,9 @@ class ConsulClient
             $this->guzzle_client->get($this->consul_url.'/v1/agent/check/warn/'.urlencode($check_id), ['query' => ['note' => $note]]);
             return true;
         } catch (Exception $e) {
-            Log::warning("failed to update check warn: ".$check_id);
+            if (class_exists(Log::class, true)) {
+                Log::warning("failed to update check warn: ".$check_id);
+            }
             return false;
         }
     }
@@ -52,7 +56,9 @@ class ConsulClient
             $this->guzzle_client->get($this->consul_url.'/v1/agent/check/fail/'.urlencode($check_id), ['query' => ['note' => $note]]);
             return true;
         } catch (Exception $e) {
-            Log::warning("failed to update check failure: ".$check_id);
+            if (class_exists(Log::class, true)) {
+                Log::warning("failed to update check failure: ".$check_id);
+            }
             return false;
         }
     }
