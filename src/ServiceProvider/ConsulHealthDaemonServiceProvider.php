@@ -36,6 +36,11 @@ class ConsulHealthDaemonServiceProvider extends ServiceProvider
             $checker->setServicePrefix(Config::get('consul-health.service_id_prefix'));
             return $checker;
         });
+
+        // register artisan command
+        $this->commands([
+            \Tokenly\ConsulHealthDaemon\Console\ConsulHealthMonitorCommand::class,
+        ]);
     }
 
     protected function bindConfig()
