@@ -15,7 +15,7 @@ composer require tokenly/consul-health-daemon
 Add the following to the `providers` array in your application config:
 
 ```
-Tokenly\ConsulHealthDaemon\ServiceProvider::class
+Tokenly\ConsulHealthDaemon\ServiceProvider\ConsulHealthDaemonServiceProvider::class
 ```
 
 
