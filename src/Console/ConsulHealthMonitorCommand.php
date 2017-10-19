@@ -3,13 +3,13 @@
 namespace Tokenly\ConsulHealthDaemon\Console;
 
 
-use App\ConsulClient;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
+use Tokenly\ConsulHealthDaemon\ConsulClient;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 
 class ConsulHealthMonitorCommand extends Command {
@@ -47,11 +47,11 @@ class ConsulHealthMonitorCommand extends Command {
      *
      * @return mixed
      */
-    public function fire()
+    public function handle()
     {
         $this->info('begin');
 
-        $consul = app('Tokenly\ConsulHealthDaemon\ConsulClient');
+        $consul = app(ConsulClient::class);
         $my_service_id = Config::get('consul-health.health_service_id');
         $sleep_delay = Config::get('consul-health.loop_delay');
         while(true) {
